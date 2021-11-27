@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" material="IE=edge">
+    <meta name="viewport" material="width=device-width, initial-scale=1.0">
+    <title>WEB TECHNOLOGIES QUIZ</title>
+</head>
+<body>
+    <h1>
+        Welcome to SE3316: Web Technologies! Press START to begin quiz ...
+    </h1>
+    <button id='StartButton'>START</button>
+    <div id='qDiv'></div>
+</body>
+<script>
+    let Button = document.getElementById('StartButton');
+    Button.onclick = StackQuestions;
+
+//FUNCTIONS
+
+    function StackQuestions()
+    {
+        Button.remove();
+
+        //Create XML request associated wtih event to stack questions
+        let qstn = new XMLHttpRequest();
+        qstn.onreadystatechange = DisplayQuestions;
+        
+        qstn.open('GET', '/questions', true);
+        qstn.send();
+    }
+ 
+    function DisplayQuestions()
+    {
+        if(this.readyState == 4 && this.status == 200)
+        {
+            let qDiv = document.getElementById('qDiv');
+            let qList = JSON.parse(this.response);
+            let material = "";
+            let qIndex = 0;
+
+            material += '<form action=javascript:Mark()>';
+
+            for(q of qList)
+            {
+                material += '<p>' + q.stem + '</p>';
+
+                let aIndex = 0;
+                
+                for(n of q.options)
+                {
+                    material += '<input type="radio" id="answer ' + n + '" name="' + q.stem + '" onclick=VerifyAnswer(' + qIndex + ',' + aIndex + ')>';
+                    material += '<label for="answer ' + n + '">' + n + '</label></br>';
+                    aIndex++;
+                }
+                
+                material += '</br><div id=\'aDiv' + qIndex + '\' name=answers></div>';
+                qIndex++;
+            }
+
+            material += '</br><input type="submit" value="Submit" id="subBtn">';
+            material += '</form></br>';
+
+            material += '<div id=\'gradeDiv\'></div></br>';
+
+            qDiv.innerHTML = material;
+        }
+    }
+
+    function Answer()
+    {
+        if(this.readyState == 4 && this.status == 200)
+        {
+            const inputAnswer = this.response.split(" ")
+
+            let aDiv = document.getElementById('aDiv' + inputAnswer[1]);
+            aDiv.innerHTML = inputAnswer[0];
+        }
+    }
+
+    function VerifyAnswer(questionIndex, answerIndex)
+    {
+        //Create XML request associated with events to verify answer
+        let ques = new XMLHttpRequest();
+        
+        //Call Answer function when readyState changes
+        ques.onreadystatechange = Answer;
+        
+        ques.open('GET', `/answers?q=${questionIndex}&a=${answerIndex}`,true);
+        ques.send();
+    }
+
+    function Mark()
+    {
+        let submitBtn = document.getElementById('subBtn');
+        submitBtn.remove();
+
+        let ques = new XMLHttpRequest();
+
+        //Call displayMark function when readyState changes
+        ques.onreadystatechange = DisplayMark;
+
+        ques.open('GET', `/`, true);
+        ques.send();
+    }
+
+    //Display mark to user
+    function DisplayMark()
+    {
+        if(this.readyState == 4 && this.status == 200)
+        {
+            let gradeDiv = document.getElementById('gradeDiv');
+            let correct = 0;
+            let total = 0;
+
+            let ansButton = document.getElementsByName("answers");
+
+            //Increment for every correct answer
+            for(let i = 0; i < ansButton.length; i++){
+                if(ansButton[i].innerHTML == "Correct!")
+                    correct++;
+                total++;
+            }
+
+            gradeDiv.innerHTML = "Quiz Mark: " + correct/total * 100 + "%!";
+        }
+    }
+
+    
+</script>
+</html>
